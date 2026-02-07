@@ -47,7 +47,7 @@
 |------|------|
 | AI 模型 | Gemini（免費）、OpenAI 兼容、DeepSeek、通義千問、Claude、Ollama |
 | 行情數據 | AkShare、Tushare、Pytdx、Baostock、YFinance |
-| 新聞搜索 | Tavily、SerpAPI、Bocha |
+| 新聞搜索 | Tavily、SerpAPI、Bocha、Brave |
 
 ### 內建交易紀律
 
@@ -90,6 +90,7 @@
 |------------|------|:----:|
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot Token（@BotFather 獲取） | 可選 |
 | `TELEGRAM_CHAT_ID` | Telegram Chat ID | 可選 |
+| `TELEGRAM_MESSAGE_THREAD_ID` | Telegram Topic ID (用於發送到子話題) | 可選 |
 | `DISCORD_WEBHOOK_URL` | Discord Webhook URL | 可選 |
 | `DISCORD_BOT_TOKEN` | Discord Bot Token（與 Webhook 二選一） | 可選 |
 | `DISCORD_CHANNEL_ID` | Discord Channel ID（使用 Bot 時需要） | 可選 |
@@ -99,6 +100,7 @@
 | `WECHAT_WEBHOOK_URL` | 企業微信 Webhook URL | 可選 |
 | `FEISHU_WEBHOOK_URL` | 飛書 Webhook URL | 可選 |
 | `PUSHPLUS_TOKEN` | PushPlus Token（[獲取地址](https://www.pushplus.plus)，國內推送服務） | 可選 |
+| `SERVERCHAN3_SENDKEY` | Server酱³ Sendkey（[獲取地址](https://sc3.ft07.com/)，手機軟體推播服務） | 可选 |
 | `CUSTOM_WEBHOOK_URLS` | 自定義 Webhook（支持釘釘等，多個用逗號分隔） | 可選 |
 | `CUSTOM_WEBHOOK_BEARER_TOKEN` | 自定義 Webhook 的 Bearer Token（用於需要認證的 Webhook） | 可選 |
 | `SINGLE_STOCK_NOTIFY` | 單股推送模式：設為 `true` 則每分析完一隻股票立即推送 | 可選 |
@@ -116,6 +118,7 @@
 | `STOCK_LIST` | 自選股代碼，如 `600519,hk00700,AAPL,TSLA` | ✅ |
 | `TAVILY_API_KEYS` | [Tavily](https://tavily.com/) 搜索 API（新聞搜索） | 推薦 |
 | `BOCHA_API_KEYS` | [博查搜索](https://open.bocha.cn/) Web Search API（中文搜索優化，支持AI摘要，多個key用逗號分隔） | 可選 |
+| `BRAVE_API_KEYS` | [Brave Search](https://brave.com/search/api/) API（隱私優先，美股優化，多個key用逗號分隔） | 可選 |
 | `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis) 備用搜索 | 可選 |
 | `TUSHARE_TOKEN` | [Tushare Pro](https://tushare.pro/weborder/#/login?reg=834638 ) Token | 可選 |
 
@@ -181,51 +184,50 @@
 
 > 📖 完整環境變量、定時任務配置請參考 [完整配置指南](full-guide.md)
 
-## 🖥️ 本地 WebUI（可選）
+## 🧩 FastAPI Web 服務（可選）
 
-本地運行時，可啟用 WebUI 來管理配置和觸發分析。
+本地運行時，可啟用 FastAPI 服務來管理配置和觸發分析。
 
 ### 啟動方式
 
 | 命令 | 說明 |
 |------|------|
-| `python main.py --webui` | 啟動 WebUI + 執行一次完整分析 |
-| `python main.py --webui-only` | 僅啟動 WebUI，手動觸發分析 |
+| `python main.py --serve` | 啟動 API 服務 + 執行一次完整分析 |
+| `python main.py --serve-only` | 僅啟動 API 服務，手動觸發分析 |
 
 - 訪問地址：`http://127.0.0.1:8000`
-- 詳細說明請參考 [配置指南 - WebUI](full-guide.md#本地-webui-管理界面)
+- API 文檔：`http://127.0.0.1:8000/docs`
 
 ### 功能特性
 
-- 📝 **配置管理** - 查看/修改 `.env` 里的自選股列表
-- 🚀 **快速分析** - 頁面輸入股票代碼，一鍵觸發分析
+- 📝 **配置管理** - 查看/修改自選股列表
+- 🚀 **快速分析** - 通過 API 接口觸發分析
 - 📊 **實時進度** - 分析任務狀態實時更新，支持多任務並行
 
 ### API 接口
 
 | 接口 | 方法 | 說明 |
 |------|------|------|
-| `/` | GET | 配置管理頁面 |
-| `/health` | GET | 健康檢查 |
-| `/analysis?code=xxx` | GET | 觸發單隻股票異步分析 |
-| `/analysis/history` | GET | 查詢分析歷史記錄 |
-| `/tasks` | GET | 查詢所有任務狀態 |
-| `/task?id=xxx` | GET | 查詢單個任務狀態 |
+| `/api/v1/analysis/analyze` | POST | 觸發股票分析 |
+| `/api/v1/analysis/tasks` | GET | 查詢任務列表 |
+| `/api/v1/analysis/status/{task_id}` | GET | 查詢任務狀態 |
+| `/api/v1/history` | GET | 查詢分析歷史記錄 |
+| `/api/health` | GET | 健康檢查 |
 
 ## 項目結構
 
 ```
 daily_stock_analysis/
 ├── main.py              # 主程序入口
-├── webui.py             # WebUI 入口
+├── server.py            # FastAPI 服務入口
 ├── src/                 # 核心業務代碼
 │   ├── analyzer.py      # AI 分析器（Gemini）
 │   ├── config.py        # 配置管理
 │   ├── notification.py  # 消息推送
 │   ├── storage.py       # 數據存儲
 │   └── ...
+├── api/                 # FastAPI API 模塊
 ├── bot/                 # 機器人模塊
-├── web/                 # WebUI 模塊
 ├── data_provider/       # 數據源適配器
 ├── docker/              # Docker 配置
 │   ├── Dockerfile

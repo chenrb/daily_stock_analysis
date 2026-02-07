@@ -20,7 +20,11 @@ from dataclasses import dataclass, field
 def setup_env():
     """初始化环境变量（支持从 .env 加载）"""
     # src/config.py -> src/ -> root
-    env_path = Path(__file__).parent.parent / '.env'
+    env_file = os.getenv("ENV_FILE")
+    if env_file:
+        env_path = Path(env_file)
+    else:
+        env_path = Path(__file__).parent.parent / '.env'
     load_dotenv(dotenv_path=env_path)
 
 
@@ -66,6 +70,7 @@ class Config:
     # === 搜索引擎配置（支持多 Key 负载均衡）===
     bocha_api_keys: List[str] = field(default_factory=list)  # Bocha API Keys
     tavily_api_keys: List[str] = field(default_factory=list)  # Tavily API Keys
+    brave_api_keys: List[str] = field(default_factory=list)  # Brave Search API Keys
     serpapi_keys: List[str] = field(default_factory=list)  # SerpAPI Keys
     
     # === 通知配置（可同时配置多个，全部推送）===
@@ -79,9 +84,11 @@ class Config:
     # Telegram 配置（需要同时配置 Bot Token 和 Chat ID）
     telegram_bot_token: Optional[str] = None  # Bot Token（@BotFather 获取）
     telegram_chat_id: Optional[str] = None  # Chat ID
+    telegram_message_thread_id: Optional[str] = None  # Topic ID (Message Thread ID) for groups
     
     # 邮件配置（只需邮箱和授权码，SMTP 自动识别）
     email_sender: Optional[str] = None  # 发件人邮箱
+    email_sender_name: str = "daily_stock_analysis股票分析助手"  # 发件人显示名称
     email_password: Optional[str] = None  # 邮箱密码/授权码
     email_receivers: List[str] = field(default_factory=list)  # 收件人列表（留空则发给自己）
     
@@ -111,6 +118,9 @@ class Config:
 
     # PushPlus 推送配置
     pushplus_token: Optional[str] = None  # PushPlus Token
+
+    # Server酱3 推送配置
+    serverchan3_sendkey: Optional[str] = None  # Server酱3 SendKey
 
     # 分析间隔时间（秒）- 用于避免API限流
     analysis_delay: float = 0.0  # 个股分析与大盘分析之间的延迟
@@ -302,6 +312,9 @@ class Config:
         serpapi_keys_str = os.getenv('SERPAPI_API_KEYS', '')
         serpapi_keys = [k.strip() for k in serpapi_keys_str.split(',') if k.strip()]
 
+        brave_keys_str = os.getenv('BRAVE_API_KEYS', '')
+        brave_api_keys = [k.strip() for k in brave_keys_str.split(',') if k.strip()]
+
         # 企微消息类型与最大字节数逻辑
         wechat_msg_type = os.getenv('WECHAT_MSG_TYPE', 'markdown')
         wechat_msg_type_lower = wechat_msg_type.lower()
@@ -331,17 +344,21 @@ class Config:
             openai_temperature=float(os.getenv('OPENAI_TEMPERATURE', '0.7')),
             bocha_api_keys=bocha_api_keys,
             tavily_api_keys=tavily_api_keys,
+            brave_api_keys=brave_api_keys,
             serpapi_keys=serpapi_keys,
             wechat_webhook_url=os.getenv('WECHAT_WEBHOOK_URL'),
             feishu_webhook_url=os.getenv('FEISHU_WEBHOOK_URL'),
             telegram_bot_token=os.getenv('TELEGRAM_BOT_TOKEN'),
             telegram_chat_id=os.getenv('TELEGRAM_CHAT_ID'),
+            telegram_message_thread_id=os.getenv('TELEGRAM_MESSAGE_THREAD_ID'),
             email_sender=os.getenv('EMAIL_SENDER'),
+            email_sender_name=os.getenv('EMAIL_SENDER_NAME', 'daily_stock_analysis股票分析助手'),
             email_password=os.getenv('EMAIL_PASSWORD'),
             email_receivers=[r.strip() for r in os.getenv('EMAIL_RECEIVERS', '').split(',') if r.strip()],
             pushover_user_key=os.getenv('PUSHOVER_USER_KEY'),
             pushover_api_token=os.getenv('PUSHOVER_API_TOKEN'),
             pushplus_token=os.getenv('PUSHPLUS_TOKEN'),
+            serverchan3_sendkey=os.getenv('SERVERCHAN3_SENDKEY'),
             custom_webhook_urls=[u.strip() for u in os.getenv('CUSTOM_WEBHOOK_URLS', '').split(',') if u.strip()],
             custom_webhook_bearer_token=os.getenv('CUSTOM_WEBHOOK_BEARER_TOKEN'),
             discord_bot_token=os.getenv('DISCORD_BOT_TOKEN'),
@@ -420,7 +437,8 @@ class Config:
         """
         # 优先从 .env 文件读取最新配置，这样即使在容器环境中修改了 .env 文件，
         # 也能获取到最新的股票列表配置
-        env_path = Path(__file__).parent.parent / '.env'
+        env_file = os.getenv("ENV_FILE")
+        env_path = Path(env_file) if env_file else (Path(__file__).parent.parent / '.env')
         stock_list_str = ''
         if env_path.exists():
             # 直接从 .env 文件读取最新的配置
@@ -462,8 +480,8 @@ class Config:
         elif not self.gemini_api_key:
             warnings.append("提示：未配置 Gemini API Key，将使用 OpenAI 兼容 API")
         
-        if not self.bocha_api_keys and not self.tavily_api_keys and not self.serpapi_keys:
-            warnings.append("提示：未配置搜索引擎 API Key (Bocha/Tavily/SerpAPI)，新闻搜索功能将不可用")
+        if not self.bocha_api_keys and not self.tavily_api_keys and not self.brave_api_keys and not self.serpapi_keys:
+            warnings.append("提示：未配置搜索引擎 API Key (Bocha/Tavily/Brave/SerpAPI)，新闻搜索功能将不可用")
         
         # 检查通知配置
         has_notification = (
@@ -473,6 +491,7 @@ class Config:
             (self.email_sender and self.email_password) or
             (self.pushover_user_key and self.pushover_api_token) or
             self.pushplus_token or
+            self.serverchan3_sendkey or
             (self.custom_webhook_urls and self.custom_webhook_bearer_token) or
             (self.discord_bot_token and self.discord_main_channel_id) or
             self.discord_webhook_url

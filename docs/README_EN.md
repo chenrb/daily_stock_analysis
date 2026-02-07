@@ -15,7 +15,7 @@ Analyze your watchlist daily → generate a decision dashboard → push to multi
 
 **Zero-cost deployment** · Runs on GitHub Actions · No server required
 
-[**Quick Start**](#-quick-start) · [**Key Features**](#-key-features) · [**Sample Output**](#-sample-output) · [**Full Guide**](full-guide.md) · [**FAQ**](FAQ.md) · [**Changelog**](CHANGELOG.md)
+[**Quick Start**](#-quick-start) · [**Key Features**](#-key-features) · [**Sample Output**](#-sample-output) · [**Full Guide**](full-guide_EN.md) · [**FAQ**](FAQ_EN.md) · [**Changelog**](CHANGELOG.md)
 
 English | [简体中文](../README.md) | [繁體中文](README_CHT.md)
 
@@ -47,7 +47,7 @@ English | [简体中文](../README.md) | [繁體中文](README_CHT.md)
 |------|----------|
 | LLMs | Gemini (free), OpenAI-compatible, DeepSeek, Qwen, Claude, Ollama |
 | Market Data | AkShare, Tushare, Pytdx, Baostock, YFinance |
-| News Search | Tavily, SerpAPI, Bocha |
+| News Search | Tavily, SerpAPI, Bocha, Brave |
 
 ### Built-in Trading Rules
 
@@ -90,6 +90,7 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 |------------|------|:----:|
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot Token (Get from @BotFather) | Optional |
 | `TELEGRAM_CHAT_ID` | Telegram Chat ID | Optional |
+| `TELEGRAM_MESSAGE_THREAD_ID` | Telegram Topic ID (For sending to topics) | Optional |
 | `DISCORD_WEBHOOK_URL` | Discord Webhook URL | Optional |
 | `DISCORD_BOT_TOKEN` | Discord Bot Token (choose one with Webhook) | Optional |
 | `DISCORD_CHANNEL_ID` | Discord Channel ID (required when using Bot) | Optional |
@@ -99,6 +100,7 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 | `WECHAT_WEBHOOK_URL` | WeChat Work Webhook URL | Optional |
 | `FEISHU_WEBHOOK_URL` | Feishu Webhook URL | Optional |
 | `PUSHPLUS_TOKEN` | PushPlus Token ([Get it here](https://www.pushplus.plus), Chinese push service) | Optional |
+| `SERVERCHAN3_SENDKEY` | ServerChan v3 SendKey (([Get it here](https://sc3.ft07.com/), Mobile app push notification service) ) | Optional |
 | `CUSTOM_WEBHOOK_URLS` | Custom Webhook URLs (supports DingTalk, etc., comma-separated) | Optional |
 | `CUSTOM_WEBHOOK_BEARER_TOKEN` | Bearer token for custom webhooks (if required) | Optional |
 | `SINGLE_STOCK_NOTIFY` | Send notification immediately after each stock | Optional |
@@ -115,8 +117,11 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 |------------|------|:----:|
 | `STOCK_LIST` | Watchlist codes, e.g., `600519,AAPL,hk00700` | ✅ |
 | `TAVILY_API_KEYS` | [Tavily](https://tavily.com/) Search API (for news) | Recommended |
+| `BRAVE_API_KEYS` | [Brave Search](https://brave.com/search/api/) API (privacy-focused, US stocks optimized) | Optional |
 | `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis) Backup search | Optional |
+| `BOCHA_API_KEYS` | [Bocha Search](https://open.bocha.cn/) Web Search API (Chinese search optimized, supports AI summaries, multiple keys comma-separated) | Optional |
 | `TUSHARE_TOKEN` | [Tushare Pro](https://tushare.pro/weborder/#/login?reg=834638 ) Token | Optional |
+| `WECHAT_MSG_TYPE` | WeChat Work message type, default `markdown`, set to `text` for plain markdown text | Optional |
 
 **Stock Code Format**
 
@@ -379,9 +384,25 @@ DEBUG=false                    # Enable debug logging
 
 ---
 
+## 🧩 FastAPI Web Service (Optional)
+
+```bash
+python main.py --serve       # Start API service + run analysis
+python main.py --serve-only  # Start API service only
+```
+
+Visit `http://127.0.0.1:8000` for configuration management, triggering analysis, and viewing task status.
+API documentation available at `http://127.0.0.1:8000/docs`.
+
+> For detailed instructions, see [Full Guide - API Service](full-guide_EN.md#fastapi-api-service)
+
+---
+
 ## 📖 Documentation
 
-- [Complete Configuration Guide](full-guide.md)
+- [Complete Configuration Guide](full-guide_EN.md)
+- [FAQ](FAQ_EN.md)
+- [Deployment Guide](DEPLOY_EN.md)
 - [Bot Command Reference](bot-command.md)
 - [Feishu Bot Setup](bot/feishu-bot-config.md)
 - [DingTalk Bot Setup](bot/dingding-bot-config.md)
